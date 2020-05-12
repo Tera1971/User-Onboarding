@@ -4,7 +4,14 @@ import "./App.css";
 
 function Form() {
   <div className="Form">
-    <div>Form Info</div>
+    <div>
+    [ ] Name
+- [ ] Email
+- [ ] Password
+- [ ] Terms of Service (checkbox)
+- [ ] A Submit button to send our form data to the server.
+ 
+    </div>
   </div>;
 }
 
