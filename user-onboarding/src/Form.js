@@ -3,7 +3,7 @@ import { withFormik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 
-function TestingForms(props) {
+function Forms(props) {
   console.log(props);
 
   return (
