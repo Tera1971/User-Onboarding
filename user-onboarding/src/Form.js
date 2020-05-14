@@ -1,90 +1,153 @@
-import React from "react";
-import { withFormik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
+import React, { useState, useEffect } from "react";
+import * as yup from "yup";
 import axios from "axios";
 
-function Forms(props) {
-  console.log(props);
 
-  return (
-    <div className="Forms">
-      <Form>
-        <label>
-          Name
-          <Field type="text" name="name" placeholder="Enter your name here" />
-        </label>
-        <ErrorMessage
-          name="name"
-          render={msg => <div className="error">{msg}</div>}
-        />
-        <label>
-          Email
-          <Field
-            type="email"
-            name="email"
-            placeholder="Enter your Email here"
-          />
-        </label>
-        <ErrorMessage
-          name="email"
-          render={msg => <div className="error">{msg}</div>}
-        />
-        <label>
-          Password
-          <Field
-            type="password"
-            name="password"
-            placeholder="Enter your password here"
-          />
-        </label>
-        <ErrorMessage
-          name="password"
-          render={msg => <div className="error">{msg}</div>}
-        />
-        <label>
-          Terms of Service
-          <Field type="checkbox" name="terms_of_service" />
-        </label>
-        <ErrorMessage
-          name="account_type"
-          render={msg => <div className="error">{msg}</div>}
-        />
-        <input className="submit" type="submit" />
-      </Form>
-    </div>
-  );
-}
-
-const FormsWithFormik = withFormik({
-  mapPropsToValues() {
-    return {
-      name: "",
-      email: "",
-      password: "",
-      terms_of_service: false
+function Form(){
+    const newForm = {
+        name: "",
+        email: "",
+        password: "",
+        terms: "",
+        remember: "",
     };
-  },
 
-  validationSchema: Yup.object().shape({
-    name: Yup.string().required("Please enter a valid Name"),
-    email: Yup.string().required("Please enter a valid Email"),
-    password: Yup.string().required("Please enter your password"),
-    terms_of_service: Yup.boolean()
-  }),
+    const [post, setPost] = useState([]);
+    
+    const [serverError, setServerError] = useState("");
+    
+    const [formState, setFormState] = useState(newForm);
+    
+    const [isButtonDisabled, setIsButtonDisabled] = useState(true);
 
-  handleSubmit(values, tools) {
-    console.log(tools);
+    const [errors, setErrors] = useState(newForm);
 
-    axios
-      .post("https://reqres.in/api/users", values)
-      .then(res => {
-        console.log(res.data);
-        tools.resetForm();
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  }
-})(TestingForms);
 
-export default Forms;
+    const formSchema = yup.object().shape({
+        name: yup
+            .string()
+            .required("Name is required"),
+        email: yup
+            .string()
+            .email("Must be a valid email address")
+            .required(),
+        password: yup
+            .string()
+            .min(6, "Password must be 6 characters long.")
+            .required("Please enter a valid password"),
+        terms: yup
+        .boolean()
+        .oneOf([true], "Please Accept to Terms and Conditions"),
+    });
+    
+    const validateChange = e => {
+        yup
+         .reach(formSchema, e.target.name)
+         .validate(e.target.value)
+         .then(valid => {
+             setErrors({...errors, [e.target.name]:""});
+         })
+         .catch(err => {
+             console.log("errors!",err);
+             setErrors({...errors, [e.target.name]: err.errors[0]});
+         });
+    };
+    
+    useEffect(() =>{
+        formSchema.isValid(formSchema).then(valid => {
+            console.log("valid?",valid);
+            setIsButtonDisabled(!valid);
+        });
+    }, [formSchema]);
+    
+    const formSubmit = e => {
+        e.preventDefault();
+
+        axios
+         
+         .post("https://reqres.in/api/users", formState)
+         .then(response => {
+            setPost(response.data);
+
+            setFormState({
+                name:"",
+                email:"",
+                password:"",
+                terms:""
+            });
+    
+            setServerError(null);
+         })
+         
+         .catch(err => {
+             setServerError("Oops!");
+         });
+    };
+    const inputChange = e => {
+        e.persist();
+        const newFormData ={
+            ...formState,
+            [e.target.name]:
+            e.target.type === "checkbox" ? e.target.checked : e.target.value
+        };
+        validateChange(e);
+        setFormState(newFormData);
+    };
+    
+    return (
+        <newForm onSubmit={formSubmit}>
+            {serverError ? <p className="error">{serverError}</p> : null}
+            <label htmlFor="name">
+                Name
+                <input
+                    id="name"
+                    type="text"
+                    name="name"
+                    onChange={inputChange}
+                    value={formState.name}
+                    data-cy="name"
+                />
+                {errors.name.length > 0 ? <p className="error">{errors.name}</p> : null}
+            </label>
+
+            <label htmlFor="email">
+                Email
+                <input
+                    type="text"
+                    name="email"
+                    onChange={inputChange}
+                    value={formState.email}
+                    data-cy="email"
+                />
+                {errors.name.length > 0 ? <p className="error">{errors.email}</p> : null}
+            </label>
+            <label htmlFor="password">
+                Password
+                <input
+                    type="password"
+                    name="password"
+                    onChange={inputChange}
+                    value={formState.password}
+                    data-cy="password"
+                />
+                {errors.name.length > 0 ? <p className="error">{errors.email}</p> : null}
+            </label>
+            <label htmlFor="terms" className="terms">
+                <input
+                    type="checkbox"
+                    name="terms"
+                    checked={formState.terms}
+                    onChange={inputChange}
+                />
+                Terms & Conditions
+            </label>
+
+            <pre>{JSON.stringify(post, null, 2)}</pre>
+            <button data-cy="submit" disabled={isButtonDisabled} type="submit">
+                Login
+            </button>
+            
+        </newForm>
+    );
+}
+export default Form;
