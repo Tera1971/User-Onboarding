@@ -54,11 +54,11 @@ function Form(){
     };
     
     useEffect(() =>{
-        formSchema.isValid(formSchema).then(valid => {
+        formSchema.isValid(formState).then(valid => {
             console.log("valid?",valid);
             setIsButtonDisabled(!valid);
         });
-    }, [formSchema]);
+    }, [formState]);
     
     const formSubmit = e => {
         e.preventDefault();
